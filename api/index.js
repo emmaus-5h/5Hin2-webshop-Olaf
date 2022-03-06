@@ -67,7 +67,7 @@ function getCategories(request, response) {
 function getProducts(request, response) {
   console.log('API ontvangt /api/products/', request.query)
   let data = []
-  const sqlOpdracht = db.prepare('SELECT products.id AS id, products.name AS name, products.description AS description, products.code AS code, products.price AS price FROM products ORDER BY id ASC')
+  const sqlOpdracht = db.prepare('SELECT products.id AS id, products.name AS name, products.description AS description, products.code AS code, products.price AS price, products.state FROM products ORDER BY products.name')
   data = sqlOpdracht.all()
   // console.log(JSON.stringify(data, null, 2))
   response.status(200).send(data)
@@ -97,10 +97,8 @@ const getRelatedProductsById = (request, response) => {
     }
   })
 }
-
 const createProduct = (request, response) => {
   const { name, email } = request.body
-
   pool.query('INSERT INTO products (name, email) VALUES ($1, $2)', [name, email], (error, _results) => {
     if (error) {
       console.log(error)
@@ -110,11 +108,9 @@ const createProduct = (request, response) => {
     }
   })
 }
-
 const updateProduct = (request, response) => {
   const id = parseInt(request.params.id)
   const { name, email } = request.body
-
   // Note: query is not correct
   pool.query(
     'UPDATE products SET name = $1, email = $2 WHERE id = $3',
@@ -129,10 +125,8 @@ const updateProduct = (request, response) => {
     }
   )
 }
-
 const deleteProduct = (request, response) => {
   const id = parseInt(request.params.id)
-
   pool.query('DELETE FROM products WHERE id = $1', [id], (error, _results) => {
     if (error) {
       console.log(error)
@@ -170,7 +164,8 @@ function checkoutOrder(request, response) {
 
   // order id maken: date + random number
   var today = new Date();
-  const orderId = today.getFullYear() + '/' + today.getMonth() + '/' + today.getDate() + '-' + String(Math.floor(Math.random() * 1000))
+  const orderId = today.getDate() + '/' + today.getMonth() + '/' + + today.getFullYear() + '-' + String(Math.floor(Math.random() * 1000))
+
 
   // maak tabel met info uit database over producten uit winkelmand
   var totaalBedrag = 0;
@@ -188,7 +183,7 @@ function checkoutOrder(request, response) {
   articleTable += "</table>"
 
   // maak inhoud van mailbericht
-  var body = `<html><body>Hi<br><br>Bedankt voor je bestelling met nummer <b>${orderId}</b><br><br>\n` +
+  var body = `<html><body>Hi<br><br>Bedankt voor je bestelling! Order number <b>${orderId}</b><br><br>\n` +
     `Naam: ${name || '-'} <br>\n` +
     `Adres: ${adres || '-'} <br>\n` +
     `Postcode: ${postcode || '-'} <br>\n` +
@@ -198,12 +193,12 @@ function checkoutOrder(request, response) {
     articleTable +
     //`productIds: ${productIds || '-'}<br>\n` + 
     //`productAmounts: ${productAmounts || '-'}<br>\n` + 
-    `groet,<br><br>\n\nShop Mailer\n</body></html>`
+    `groet,<br><br>\n\olaf\n</body></html>`
 
 
   // check mailconfig en verstuur mail
   if (mailConfigOK()) {
-    sendMail('Bevestiging van bestelling', body, email)
+    sendMail('Order Confirmation', body, email)
     // note: mailer is async, so technically it has not been send yet 
     // if an error occurs during sending of the mail, 
     // the user gets an okee, but the error is dumped in console.log
